@@ -1,16 +1,20 @@
 import React, { useState } from "react";
 import Add from "../assets/images/add.png";
-
 import { auth, storage, db } from "../config/firebase";
-
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { doc, setDoc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
+import {
+  doc,
+  setDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
+import { useNavigate, Link } from "react-router-dom";
 
 const Register = () => {
   const [error, setError] = useState(false);
-
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -27,15 +31,24 @@ const Register = () => {
       return;
     }
 
+    // Check if display name already exists
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("displayName", "==", displayName));
+
     try {
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        setError(true);
+        alert("Display name is already in use. Please choose another one.");
+        return;
+      }
+
       const { user } = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
-
       const storageRef = ref(storage, displayName);
-
       const uploadTask = uploadBytesResumable(storageRef, file);
 
       uploadTask.on(
@@ -45,7 +58,7 @@ const Register = () => {
         },
         (err) => {
           setError(true);
-          console.log("Uplaod error: ", err);
+          console.log("Upload error: ", err);
         },
         async () => {
           try {
@@ -54,7 +67,6 @@ const Register = () => {
               displayName,
               photoURL: downloadURL,
             });
-            // console.log("Post Upload User: ", user);
 
             await setDoc(doc(db, "users", user.uid), {
               uid: user.uid,
@@ -63,7 +75,7 @@ const Register = () => {
               photoURL: downloadURL,
             });
 
-            await setDoc(doc(db, "userChat", user.uid), {});
+            await setDoc(doc(db, "userChats", user.uid), {});
             navigate("/");
           } catch (updateError) {
             setError(true);
@@ -73,7 +85,7 @@ const Register = () => {
       );
     } catch (err) {
       setError(true);
-      console.log("Creat auth error: ", err);
+      console.log("Create auth error: ", err);
     }
   };
 
@@ -95,7 +107,9 @@ const Register = () => {
           <button>Sign Up</button>
           {error && <span>Something went wrong</span>}
         </form>
-        <p>Have an account? Login</p>
+        <p>
+          Have an account? <Link to={"/login"}>Login</Link>
+        </p>
       </div>
     </div>
   );
