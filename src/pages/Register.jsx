@@ -6,9 +6,13 @@ import { auth, storage, db } from "../config/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
 const Register = () => {
   const [error, setError] = useState(false);
+
+  const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -50,7 +54,7 @@ const Register = () => {
               displayName,
               photoURL: downloadURL,
             });
-            console.log("Post Upload User: ", user);
+            // console.log("Post Upload User: ", user);
 
             await setDoc(doc(db, "users", user.uid), {
               uid: user.uid,
@@ -60,15 +64,16 @@ const Register = () => {
             });
 
             await setDoc(doc(db, "userChat", user.uid), {});
+            navigate("/");
           } catch (updateError) {
             setError(true);
-            console.log("Update profile error: ", updateError);
+            console.log("Update user data error: ", updateError);
           }
         }
       );
     } catch (err) {
       setError(true);
-      console.log("Non-Uplaod error: ", err);
+      console.log("Creat auth error: ", err);
     }
   };
 
