@@ -25,7 +25,7 @@ const Chats = () => {
     currentUser.uid && getChats();
   }, [currentUser.uid]);
 
-  const chatList = Object.entries(chats);
+  const chatList = Object.entries(chats)?.sort((a, b) => b[1].date - a[1].date);
   // console.log(chatList);
 
   const handleSelect = (userInfo) => {
