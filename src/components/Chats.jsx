@@ -1,12 +1,15 @@
 import React, { useEffect, useState, useContext } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
-import { AuthContext } from "../context/AuthContext";
 import { db } from "../config/firebase";
+
+import { AuthContext } from "../context/AuthContext";
+import { ChatContext } from "../context/ChatContext";
 
 const Chats = () => {
   const [chats, setChats] = useState([]);
 
   const { currentUser } = useContext(AuthContext);
+  const { dispatch } = useContext(ChatContext);
 
   useEffect(() => {
     const getChats = () => {
@@ -23,20 +26,24 @@ const Chats = () => {
   }, [currentUser.uid]);
 
   const chatList = Object.entries(chats);
-  console.log(chatList);
+  // console.log(chatList);
+
+  const handleSelect = (userInfo) => {
+    dispatch({ type: "CHANGE_USER", payload: userInfo });
+  };
 
   return (
     <div className="chats">
       {chatList?.map((chat) => (
-        <div key={chat[0]} className="userChat">
+        <div
+          key={chat[0]}
+          className="userChat"
+          onClick={() => handleSelect(chat[1].userInfo)}
+        >
           <img src={chat[1].userInfo.photoURL} alt="" />
           <div className="userChatInfo">
             <span>{chat[1].userInfo.displayName}</span>
-            <p>
-              {chat[1].userInfo.lastMessage
-                ? chat[1].userInfo.lastMessage.text
-                : "No messages"}
-            </p>
+            <p>{chat[1].lastMessage?.text}</p>
           </div>
         </div>
       ))}
